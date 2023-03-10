@@ -3,7 +3,7 @@ package main
 import(
 	"net/http"
 	"github.com/gin-gonic/gin"
-	 "errors"
+	//  "errors"
 )
 
 type book struct{
@@ -20,34 +20,27 @@ var books = []book{
 }
 
 
-func bookById(c* gin.Context){
-	id := c.Param("id")
-	book,err := getBookById(id)
 
-	if err != nil {
-		c.IndentedJSON(http.StatusNotFound, gin.H{"message" : "Book not found."})
-		return
-	}
+func getBookByID(c *gin.Context) {
+    id := c.Param("id")
 
-	c.IndentedJSON(http.StatusOK,book)
+    // Loop over the list of books, looking for
+    // an album whose ID value matches the parameter.
+    for _, book := range books {
+        if book.ID == id {
+            c.IndentedJSON(http.StatusOK, book)
+            return
+        }
+    }
+    c.IndentedJSON(http.StatusNotFound, gin.H{"message": "book not found"})
 }
 
-// helper
-func getBookById(id string)(*book,error){
-for i, b := range books {
-	if b.ID == id{
-		return &books[i],nil
-	} 
-
-}
-return nil, errors.New("book not found")
-}
 
 func getBooks(c * gin.Context){
 	c.IndentedJSON(http.StatusOK, books)
 }
 
-func createBook(c * gin.Context){
+func postBooks(c * gin.Context){
 	var newBook book 
 
     err := c.BindJSON(&newBook)
@@ -64,7 +57,7 @@ func createBook(c * gin.Context){
 func main(){
 	router := gin.Default()
 	router.GET("/books",getBooks)
-	router.GET("/books/:id",bookById)
-	router.POST("/books",createBook)
+	router.GET("/books/:id",getBookByID)
+	router.POST("/books",postBooks)
 	router.Run("localhost:8080")
 }
