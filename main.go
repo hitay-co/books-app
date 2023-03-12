@@ -33,7 +33,6 @@ func checkoutBook(c *gin.Context) {
 	for _, book := range books {
 		if book.ID == id {
 			bookToCheckout = book
-			return
 		}
 	}
 
@@ -44,8 +43,6 @@ func checkoutBook(c *gin.Context) {
 
 	bookToCheckout.Quantity -= 1
 	c.IndentedJSON(http.StatusOK, bookToCheckout)
-
-	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "book not found"})
 
 }
 
