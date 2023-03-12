@@ -1,16 +1,17 @@
 package main
 
-import(
+import (
 	"net/http"
+
 	"github.com/gin-gonic/gin"
 	//  "errors"
 )
 
-type book struct{
-	ID        string  `json:"id"`
-	Title     string  `json:"title"`
-	Author    string  `json:"author"`
-	Quantity  int     `json:"quantity"`
+type book struct {
+	ID       string `json:"id"`
+	Title    string `json:"title"`
+	Author   string `json:"author"`
+	Quantity int    `json:"quantity"`
 }
 
 var books = []book{
@@ -19,45 +20,72 @@ var books = []book{
 	{ID: "3", Title: "War and Peace", Author: "Leo Tolstoy", Quantity: 6},
 }
 
+func checkoutBook(c *gin.Context) {
+	id, ok := c.GetQuery("id")
 
+	if !ok {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "missing id query parameter"})
+		return
+	}
 
-func getBookByID(c *gin.Context) {
-    id := c.Param("id")
+	var bookToCheckout book
 
-    // Loop over the list of books, looking for
-    // an album whose ID value matches the parameter.
-    for _, book := range books {
-        if book.ID == id {
-            c.IndentedJSON(http.StatusOK, book)
-            return
-        }
-    }
-    c.IndentedJSON(http.StatusNotFound, gin.H{"message": "book not found"})
+	for _, book := range books {
+		if book.ID == id {
+			bookToCheckout = book
+			return
+		}
+	}
+
+	if bookToCheckout.Quantity <= 0 {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "book not available"})
+		return
+	}
+
+	bookToCheckout.Quantity -= 1
+	c.IndentedJSON(http.StatusOK, bookToCheckout)
+
+	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "book not found"})
+
 }
 
+func getBookByID(c *gin.Context) {
+	id := c.Param("id")
 
-func getBooks(c * gin.Context){
+	// Loop over the list of books, looking for
+	// an book whose ID value matches the parameter.
+	for _, book := range books {
+		if book.ID == id {
+			c.IndentedJSON(http.StatusOK, book)
+			return
+		}
+	}
+	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "book not found"})
+}
+
+func getBooks(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, books)
 }
 
-func postBooks(c * gin.Context){
-	var newBook book 
+func postBooks(c *gin.Context) {
+	var newBook book
 
-    err := c.BindJSON(&newBook)
+	err := c.BindJSON(&newBook)
 
 	if err != nil {
-		return 
+		return
 	}
 
-	books = append(books,newBook)
-	
-	c.IndentedJSON(http.StatusCreated,newBook )
+	books = append(books, newBook)
+
+	c.IndentedJSON(http.StatusCreated, newBook)
 }
 
-func main(){
+func main() {
 	router := gin.Default()
-	router.GET("/books",getBooks)
-	router.GET("/books/:id",getBookByID)
-	router.POST("/books",postBooks)
+	router.GET("/books", getBooks)
+	router.GET("/books/:id", getBookByID)
+	router.POST("/books", postBooks)
+	router.PUT("/checkout", checkoutBook)
 	router.Run("localhost:8080")
 }
