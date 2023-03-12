@@ -28,21 +28,19 @@ func checkoutBook(c *gin.Context) {
 		return
 	}
 
-	var bookToCheckout book
-
 	for _, book := range books {
 		if book.ID == id {
-			bookToCheckout = book
+			if book.Quantity <= 0 {
+				c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "book not available"})
+				return
+			}
+
+			book.Quantity -= 1
+			c.IndentedJSON(http.StatusOK, book)
+
+			break
 		}
 	}
-
-	if bookToCheckout.Quantity <= 0 {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "book not available"})
-		return
-	}
-
-	bookToCheckout.Quantity -= 1
-	c.IndentedJSON(http.StatusOK, bookToCheckout)
 
 }
 
